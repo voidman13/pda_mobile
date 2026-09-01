@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pda_mobile/pda_mobile.dart';
 
 void main() => runApp(const ScannerExampleApp());
@@ -46,6 +47,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
+          FocusManager.instance.primaryFocus?.unfocus();
           setState(() => _currentIndex = index);
         },
         destinations: const [
@@ -237,23 +239,170 @@ class TextFieldScreen extends StatefulWidget {
 }
 
 class _TextFieldScreenState extends State<TextFieldScreen> {
+  static const _keyboardGuard = MethodChannel('pda_mobile/keyboard_guard');
+  static const _backspaceKeyCode = 67;
+
+  final _controllers = List.generate(3, (_) => TextEditingController());
+  final _focusNodes = List.generate(3, (_) => FocusNode());
+  int? _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var index = 0; index < _focusNodes.length; index++) {
+      _focusNodes[index].addListener(() => _onFocusChanged(index));
+    }
+    _keyboardGuard.setMethodCallHandler(_onNativeMethodCall);
+  }
+
+  Future<void> _setImeEnabled(bool enabled) {
+    return _keyboardGuard.invokeMethod<void>('setImeEnabled', {
+      'enabled': enabled,
+    });
+  }
+
+  void _onFocusChanged(int index) {
+    if (_focusNodes[index].hasFocus) {
+      if (_selectedIndex != index) {
+        setState(() => _selectedIndex = index);
+      }
+      _setImeEnabled(true);
+      return;
+    }
+
+    if (!_focusNodes.any((node) => node.hasFocus)) {
+      _setImeEnabled(false);
+    }
+  }
+
+  Future<void> _onNativeMethodCall(MethodCall call) async {
+    if (call.method != 'onPhysicalKey' || _selectedIndex == null) return;
+    final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+    final keyCode = arguments['keyCode'] as int;
+    final unicodeChar = arguments['unicodeChar'] as int;
+
+    if (keyCode == _backspaceKeyCode) {
+      _deleteFromSelectedField();
+    } else if (unicodeChar >= 0x20) {
+      _insertIntoSelectedField(String.fromCharCode(unicodeChar));
+    }
+  }
+
+  TextEditingController get _selectedController =>
+      _controllers[_selectedIndex!];
+
+  void _insertIntoSelectedField(String character) {
+    final controller = _selectedController;
+    final value = controller.value;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+    final updatedText = value.text.replaceRange(
+      selection.start,
+      selection.end,
+      character,
+    );
+    controller.value = value.copyWith(
+      text: updatedText,
+      selection: TextSelection.collapsed(
+        offset: selection.start + character.length,
+      ),
+      composing: TextRange.empty,
+    );
+  }
+
+  void _deleteFromSelectedField() {
+    final controller = _selectedController;
+    final value = controller.value;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+
+    if (!selection.isCollapsed) {
+      controller.value = value.copyWith(
+        text: value.text.replaceRange(selection.start, selection.end, ''),
+        selection: TextSelection.collapsed(offset: selection.start),
+        composing: TextRange.empty,
+      );
+    } else if (selection.start > 0) {
+      controller.value = value.copyWith(
+        text: value.text.replaceRange(selection.start - 1, selection.start, ''),
+        selection: TextSelection.collapsed(offset: selection.start - 1),
+        composing: TextRange.empty,
+      );
+    }
+  }
+
+  void _unselectField() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _setImeEnabled(false);
+    setState(() => _selectedIndex = null);
+  }
+
+  @override
+  void dispose() {
+    _keyboardGuard.setMethodCallHandler(null);
+    _setImeEnabled(false);
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    for (final focusNode in _focusNodes) {
+      focusNode.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(width: 0.5, color: Colors.grey),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: TextField(
-              decoration: InputDecoration.collapsed(hintText: 'hintText'),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Сонгосон field: ${_selectedIndex == null ? '-' : _selectedIndex! + 1}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _selectedIndex == null ? null : _unselectField,
+                icon: const Icon(Icons.deselect),
+                label: const Text('Unselect'),
+              ),
+            ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
+          for (var index = 0; index < _controllers.length; index++) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  width: _selectedIndex == index ? 2 : 0.5,
+                  color: _selectedIndex == index
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: TextField(
+                controller: _controllers[index],
+                focusNode: _focusNodes[index],
+                textInputAction: TextInputAction.done,
+                onTap: () {
+                  if (_selectedIndex != index) {
+                    setState(() => _selectedIndex = index);
+                  }
+                },
+                onSubmitted: (_) => _focusNodes[index].unfocus(),
+                decoration: InputDecoration.collapsed(
+                  hintText: 'TextField ${index + 1}',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ],
       ),
     );
