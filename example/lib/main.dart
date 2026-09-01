@@ -37,7 +37,11 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: const [ScanButtonScreen(), PhysicalButtonScreen()],
+        children: const [
+          ScanButtonScreen(),
+          PhysicalButtonScreen(),
+          TextFieldScreen(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -52,6 +56,10 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
           NavigationDestination(
             icon: Icon(Icons.touch_app),
             label: 'Device button',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.text_fields),
+            label: 'TextField',
           ),
         ],
       ),
@@ -216,6 +224,37 @@ class _ResultLayout extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class TextFieldScreen extends StatefulWidget {
+  const TextFieldScreen({super.key});
+
+  @override
+  State<TextFieldScreen> createState() => _TextFieldScreenState();
+}
+
+class _TextFieldScreenState extends State<TextFieldScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(width: 0.5, color: Colors.grey),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: TextField(
+              decoration: InputDecoration.collapsed(hintText: 'hintText'),
+            ),
+          ),
+          SizedBox(height: 12),
+        ],
       ),
     );
   }
