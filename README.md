@@ -1,30 +1,44 @@
-N60
-PDA
-N60
-N60
-N60/N60/N60:13/TP1A.220624.014/1726027281:user/release-keys
-13
-mt6762
-package:com.android.keychain
-package:com.example.pda_mobile
-package:com.bld.agingtest
-package:com.example.devicetest
-package:com.example.scantype
-package:com.bld.settings.scan
-package:com.bld.server.scan.arm
-package:com.bld.server.scan
-package:com.google.android.contactkeys
-package:com.google.android.configupdater
-package:com.mediatek.aovtestapp
-package:com.android.keychain
-package:com.example.pda_mobile
-package:com.bld.agingtest
-package:com.example.devicetest
-package:com.example.scantype
-package:com.bld.settings.scan
-package:com.bld.server.scan.arm
-package:com.bld.server.scan
-package:com.google.android.contactkeys
-package:com.google.android.configupdater
-package:com.mediatek.aovtestapp
+# pda_mobile
 
+Flutter plugin for the built-in barcode scanner on the BLD N60 Android PDA.
+
+## Usage
+
+The default trigger renders a `SCAN BARCODE` button:
+
+```dart
+ScanBarcodeButton(
+  onScanned: (barcode) => print(barcode),
+  onError: (error) => print(error),
+)
+```
+
+Pass any widget as `child` to use a custom trigger:
+
+```dart
+ScanBarcodeButton(
+  onScanned: (barcode) => setState(() => value = barcode),
+  child: Container(
+    padding: const EdgeInsets.all(12),
+    child: const Row(
+      children: [
+        Icon(Icons.qr_code_scanner),
+        Text('Бараа уншуулах'),
+      ],
+    ),
+  ),
+)
+```
+
+For direct control without a widget:
+
+```dart
+final scanner = BldScanner.instance;
+final subscription = scanner.results.listen((barcode) {});
+
+await scanner.start();
+await scanner.stop();
+```
+
+This plugin currently supports Android and expects the BLD scanner broadcast
+actions available on the N60 device.
