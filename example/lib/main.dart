@@ -280,30 +280,74 @@ class _TextFieldScreenState extends State<TextFieldScreen> {
           ),
           const SizedBox(height: 12),
           for (var index = 0; index < _keyboard.fieldCount; index++) ...[
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  width: _keyboard.selectedIndex == index ? 2 : 0.5,
-                  color: _keyboard.selectedIndex == index
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey,
+            Row(
+              children: [
+                selectTextFieldWidget(index),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: _keyboard.selectedIndex == index ? 2 : 0.5,
+                        color: _keyboard.selectedIndex == index
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey,
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: TextField(
+                      controller: _keyboard.textControllerAt(index),
+                      focusNode: _keyboard.focusNodeAt(index),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _keyboard.finishEditing(index),
+                      decoration: InputDecoration.collapsed(
+                        hintText: 'TextField ${index + 1}',
+                      ),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: TextField(
-                controller: _keyboard.textControllerAt(index),
-                focusNode: _keyboard.focusNodeAt(index),
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _keyboard.finishEditing(index),
-                decoration: InputDecoration.collapsed(
-                  hintText: 'TextField ${index + 1}',
-                ),
-              ),
+              ],
             ),
             const SizedBox(height: 12),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget selectTextFieldWidget(int index) {
+    final isSelected = _keyboard.selectedIndex == index;
+
+    return Semantics(
+      selected: isSelected,
+      button: true,
+      label: 'TextField ${index + 1}-ийг сонгох',
+      child: InkWell(
+        onTap: () => _keyboard.select(index),
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              border: Border.all(
+                width: 2,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey,
+              ),
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, size: 13, color: Colors.white)
+                : null,
+          ),
+        ),
       ),
     );
   }

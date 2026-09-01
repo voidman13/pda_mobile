@@ -77,5 +77,11 @@ the IME. To stop routing physical keys to a field:
 keyboard.unselect();
 ```
 
+Select a field without focusing it or opening the IME:
+
+```dart
+keyboard.select(index);
+```
+
 Listen to the controller to rebuild selection indicators based on
 `keyboard.selectedIndex`, and dispose it with the owning widget.

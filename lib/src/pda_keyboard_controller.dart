@@ -38,6 +38,18 @@ class PdaKeyboardController extends ChangeNotifier {
   /// Removes focus but keeps [selectedIndex] for physical keypad input.
   void finishEditing(int index) => _focusNodes[index].unfocus();
 
+  /// Selects a field for physical input without focusing its TextField.
+  void select(int index) {
+    RangeError.checkValidIndex(index, _textControllers, 'index');
+    for (final focusNode in _focusNodes) {
+      focusNode.unfocus();
+    }
+    _setImeEnabled(false);
+    if (_selectedIndex == index) return;
+    _selectedIndex = index;
+    notifyListeners();
+  }
+
   /// Clears focus and selection. Physical keys are ignored afterwards.
   void unselect() {
     for (final focusNode in _focusNodes) {
