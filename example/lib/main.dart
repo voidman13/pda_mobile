@@ -46,7 +46,6 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          FocusManager.instance.primaryFocus?.unfocus();
           setState(() => _currentIndex = index);
         },
         destinations: const [
@@ -240,10 +239,18 @@ class TextFieldScreen extends StatefulWidget {
 class _TextFieldScreenState extends State<TextFieldScreen> {
   final _keyboard = PdaKeyboardController(fieldCount: 3);
 
+  StreamSubscription<String>? _subscription;
+
   @override
   void initState() {
     super.initState();
     _keyboard.addListener(_onKeyboardChanged);
+    _subscription = BldScanner.instance.results.listen((barcode) {
+      if (!mounted) return;
+      if (_keyboard.selectedIndex != null) {
+        _keyboard.textControllerAt(_keyboard.selectedIndex ?? 0).text = barcode;
+      }
+    });
   }
 
   void _onKeyboardChanged() => setState(() {});
@@ -252,65 +259,69 @@ class _TextFieldScreenState extends State<TextFieldScreen> {
   void dispose() {
     _keyboard.removeListener(_onKeyboardChanged);
     _keyboard.dispose();
+    _subscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Сонгосон field: ${_keyboard.selectedIndex == null ? '-' : _keyboard.selectedIndex! + 1}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: _keyboard.selectedIndex == null
-                    ? null
-                    : _keyboard.unselect,
-                icon: const Icon(Icons.deselect),
-                label: const Text('Unselect'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          for (var index = 0; index < _keyboard.fieldCount; index++) ...[
+    return PdaKeyboardRegion(
+      controller: _keyboard,
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
             Row(
               children: [
-                selectTextFieldWidget(index),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        width: _keyboard.selectedIndex == index ? 2 : 0.5,
-                        color: _keyboard.selectedIndex == index
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.grey,
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: TextField(
-                      controller: _keyboard.textControllerAt(index),
-                      focusNode: _keyboard.focusNodeAt(index),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _keyboard.finishEditing(index),
-                      decoration: InputDecoration.collapsed(
-                        hintText: 'TextField ${index + 1}',
-                      ),
-                    ),
+                  child: Text(
+                    'Сонгосон field: ${_keyboard.selectedIndex == null ? '-' : _keyboard.selectedIndex! + 1}',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _keyboard.selectedIndex == null
+                      ? null
+                      : _keyboard.unselect,
+                  icon: const Icon(Icons.deselect),
+                  label: const Text('Unselect'),
                 ),
               ],
             ),
             const SizedBox(height: 12),
+            for (var index = 0; index < _keyboard.fieldCount; index++) ...[
+              Row(
+                children: [
+                  selectTextFieldWidget(index),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: _keyboard.selectedIndex == index ? 2 : 0.5,
+                          color: _keyboard.selectedIndex == index
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: TextField(
+                        controller: _keyboard.textControllerAt(index),
+                        focusNode: _keyboard.focusNodeAt(index),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _keyboard.finishEditing(index),
+                        decoration: InputDecoration.collapsed(
+                          hintText: 'TextField ${index + 1}',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

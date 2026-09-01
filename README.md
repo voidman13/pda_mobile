@@ -85,3 +85,16 @@ keyboard.select(index);
 
 Listen to the controller to rebuild selection indicators based on
 `keyboard.selectedIndex`, and dispose it with the owning widget.
+
+Wrap the screen or widget to clear selection automatically when the user taps
+outside it, the widget is disposed, or the app goes to the background:
+
+```dart
+PdaKeyboardRegion(
+  controller: keyboard,
+  child: YourTextFieldScreen(),
+)
+```
+
+This is useful with `IndexedStack`: switching with a navigation control outside
+the region unselects the field while preserving the screen and its text.
