@@ -1,4 +1,5 @@
 library;
 
 export 'src/bld_scanner.dart';
+export 'src/pda_keyboard_controller.dart';
 export 'src/scan_barcode_button.dart';

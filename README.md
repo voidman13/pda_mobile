@@ -42,3 +42,40 @@ await scanner.stop();
 
 This plugin currently supports Android and expects the BLD scanner broadcast
 actions available on the N60 device.
+
+## Physical keypad with TextFields
+
+Make the app activity extend the package activity so N60 keypad events can be
+captured before Android opens the software keyboard:
+
+```kotlin
+package com.example.my_app
+
+import com.example.pda_mobile.PdaFlutterActivity
+
+class MainActivity : PdaFlutterActivity()
+```
+
+Create one controller for a group of text fields:
+
+```dart
+final keyboard = PdaKeyboardController(fieldCount: 3);
+
+TextField(
+  controller: keyboard.textControllerAt(index),
+  focusNode: keyboard.focusNodeAt(index),
+  textInputAction: TextInputAction.done,
+  onSubmitted: (_) => keyboard.finishEditing(index),
+)
+```
+
+The focused field is selected automatically. After `Done`, physical keypad
+characters and Backspace continue editing the selected field without opening
+the IME. To stop routing physical keys to a field:
+
+```dart
+keyboard.unselect();
+```
+
+Listen to the controller to rebuild selection indicators based on
+`keyboard.selectedIndex`, and dispose it with the owning widget.
