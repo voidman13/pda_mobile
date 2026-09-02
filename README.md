@@ -51,7 +51,7 @@ captured before Android opens the software keyboard:
 ```kotlin
 package com.example.my_app
 
-import com.example.pda_mobile.PdaFlutterActivity
+import mn.sgsoft.pda_mobile.PdaFlutterActivity
 
 class MainActivity : PdaFlutterActivity()
 ```

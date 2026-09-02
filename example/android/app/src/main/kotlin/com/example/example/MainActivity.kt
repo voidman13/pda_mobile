@@ -1,5 +1,5 @@
 package com.example.example
 
-import com.example.pda_mobile.PdaFlutterActivity
+import mn.sgsoft.pda_mobile.PdaFlutterActivity
 
 class MainActivity : PdaFlutterActivity()

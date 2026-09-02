@@ -1,4 +1,4 @@
-package com.example.pda_mobile
+package mn.sgsoft.pda_mobile
 
 import android.content.Context
 import android.view.KeyEvent

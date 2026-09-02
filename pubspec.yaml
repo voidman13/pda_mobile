@@ -21,7 +21,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.pda_mobile
+        package: mn.sgsoft.pda_mobile
         pluginClass: PdaMobilePlugin
       ios:
         pluginClass: PdaMobilePlugin
